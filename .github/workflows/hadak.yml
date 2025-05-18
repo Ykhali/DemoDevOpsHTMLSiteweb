@@ -1,0 +1,47 @@
+name: Deploy Static Site to GitHub Pages
+
+on:
+  # Se déclenche sur les pushes vers la branche spécifiée
+  push:
+    branches:
+      - main # Remplacez par votre branche principale si elle est différente (ex: master)
+  
+  # Permet de lancer ce workflow manuellement depuis l'onglet Actions de GitHub
+  workflow_dispatch:
+
+# Définit les permissions nécessaires pour que GITHUB_TOKEN puisse déployer sur GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Permet un seul déploiement concurrentiel. 
+# Si de nouveaux commits sont poussés rapidement, les exécutions précédentes en attente ou en cours seront annulées.
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # Tâche de déploiement - This 'deploy' job handles the Continuous Deployment (CD)
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }} # URL of the page deployed
+    runs-on: ubuntu-latest # Utilise la dernière version d'Ubuntu disponible sur GitHub Actions
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Action pour récupérer le code du dépôt
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4 # CD Step: Configures the GitHub Pages environment for deployment
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3 # CD Step: Packages your site's files into an artifact for deployment
+        with:
+          # Téléverse le contenu du répertoire racine. 
+          # Si votre site est dans un sous-dossier (ex: 'public' ou 'dist'), changez ceci pour './public' ou './dist'
+          path: '.' 
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4 # CD Step: This action takes the artifact and deploys it to GitHub Pages
